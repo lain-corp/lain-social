@@ -1,0 +1,60 @@
+---
+version: "2.0"
+
+services:
+  lain-social-bot:
+    image: YOUR_DOCKER_IMAGE_HERE  # Replace with your Docker Hub image
+    env:
+      # Bot Configuration
+      - RUN_MODE=scheduled
+      - POST_INTERVAL_HOURS=6
+      - SIMULTANEOUS_POST=true
+      - IMAGE_DIR=/app/images
+      
+      # AI Comments (Optional - set USE_AI_COMMENTS=true to enable)
+      - USE_AI_COMMENTS=false
+      - AI_PROVIDER=openai
+      # - OPENAI_API_KEY=your_key_here
+      # - ANTHROPIC_API_KEY=your_key_here
+      
+      # Social Media Credentials (Add your actual credentials)
+      # Twitter/X
+      # - TWITTER_API_KEY=your_key_here
+      # - TWITTER_API_SECRET=your_secret_here
+      # - TWITTER_ACCESS_TOKEN=your_token_here
+      # - TWITTER_ACCESS_TOKEN_SECRET=your_secret_here
+      # - TWITTER_BEARER_TOKEN=your_bearer_here
+      
+      # Mastodon
+      # - MASTODON_ACCESS_TOKEN=your_token_here
+      # - MASTODON_API_BASE_URL=https://mastodon.social
+      
+      # Reddit
+      # - REDDIT_CLIENT_ID=your_id_here
+      # - REDDIT_CLIENT_SECRET=your_secret_here
+      # - REDDIT_USERNAME=your_username_here
+      # - REDDIT_PASSWORD=your_password_here
+      # - REDDIT_SUBREDDIT=your_subreddit_here
+
+profiles:
+  compute:
+    lain-social-bot:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 512Mi
+        storage:
+          size: 1Gi
+  placement:
+    akash:
+      pricing:
+        lain-social-bot:
+          denom: uakt
+          amount: 100
+
+deployment:
+  lain-social-bot:
+    akash:
+      profile: lain-social-bot
+      count: 1

@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  lain-social-bot:
+    build: .
+    container_name: lain-social-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # Mount images directory to persist images
+      - ./images:/app/images:ro
+    environment:
+      # Override any environment variables here if needed
+      - PYTHONUNBUFFERED=1
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
