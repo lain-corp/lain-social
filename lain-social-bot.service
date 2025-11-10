@@ -1,0 +1,27 @@
+[Unit]
+Description=Lain Social Bot
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=lainbot
+Group=lainbot
+WorkingDirectory=/opt/lain-social
+EnvironmentFile=/opt/lain-social/.env
+ExecStart=/usr/bin/python3 /opt/lain-social/bot.py
+Restart=on-failure
+RestartSec=60
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=lain-social-bot
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/lain-social/images
+
+[Install]
+WantedBy=multi-user.target
