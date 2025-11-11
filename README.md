@@ -93,11 +93,50 @@ All configuration is done via environment variables. See `.env.example` for a co
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `USE_AI_COMMENTS` | `false` | Enable AI-generated comments |
-| `AI_PROVIDER` | `openai` | AI provider: `openai` or `anthropic` |
+| `AI_PROVIDER` | `openrouter` | AI provider: `openai`, `anthropic`, or `openrouter` |
+| `OPENROUTER_API_KEY` | - | OpenRouter API key (recommended for multimodal) |
+| `OPENROUTER_MODEL` | `anthropic/claude-3.5-sonnet` | OpenRouter model to use |
 | `OPENAI_API_KEY` | - | OpenAI API key |
 | `OPENAI_MODEL` | `gpt-3.5-turbo` | OpenAI model to use |
 | `ANTHROPIC_API_KEY` | - | Anthropic API key |
 | `ANTHROPIC_MODEL` | `claude-3-haiku-20240307` | Anthropic model to use |
+
+**Note:** When using `AI_PROVIDER=openrouter`, the bot will send images to the AI model for multimodal analysis, generating contextual comments based on the actual image content. This provides more relevant and engaging comments compared to generic text-only generation.
+
+#### Using OpenRouter (Recommended)
+
+OpenRouter provides access to multiple AI models through a unified API, including vision-capable models like Claude 3.5 Sonnet, GPT-4 Vision, and others. This is the recommended approach for multimodal AI comments.
+
+**Benefits:**
+- **Image Analysis**: The AI can actually "see" the Lain images and generate contextually relevant comments
+- **Model Variety**: Access to multiple models (Anthropic, OpenAI, Google, etc.) through one API
+- **Cost Effective**: Competitive pricing across different models
+- **Easy Switching**: Change models without changing code
+
+**Setup:**
+1. Sign up at [OpenRouter.ai](https://openrouter.ai/)
+2. Get your API key from the [Keys page](https://openrouter.ai/keys)
+3. Set environment variables:
+   ```bash
+   USE_AI_COMMENTS=true
+   AI_PROVIDER=openrouter
+   OPENROUTER_API_KEY=your_key_here
+   OPENROUTER_MODEL=anthropic/claude-3.5-sonnet  # or other vision models
+   ```
+
+**Supported Models with Vision:**
+- `anthropic/claude-3.5-sonnet` (recommended)
+- `anthropic/claude-3-opus`
+- `anthropic/claude-3-sonnet`
+- `openai/gpt-4-vision-preview`
+- `google/gemini-pro-vision`
+
+**How it Works:**
+When OpenRouter is configured, each image is:
+1. Encoded to base64
+2. Sent to the AI model along with a prompt
+3. Analyzed by the vision model
+4. Returned with a contextual comment about the specific image content
 
 ### Social Media Platforms
 
@@ -132,6 +171,108 @@ Required environment variables:
 - `REDDIT_SUBREDDIT` (default: `test`)
 
 [Get Reddit API credentials](https://www.reddit.com/prefs/apps)
+
+### Additional Platforms & Integration Guide
+
+The project includes adapters and placeholders for a broader set of platforms. Below are the environment variables and quick setup notes for each additional platform we support or provide guidance for.
+
+#### LinkedIn
+
+Required environment variables:
+- `LINKEDIN_ACCESS_TOKEN` — OAuth2 access token with the `w_member_social` scope (or org-level equivalent)
+- `LINKEDIN_OWNER_URN` — Owner URN, e.g. `urn:li:person:xxxxxxxx` or `urn:li:organization:yyyyyyyy`
+
+Notes:
+- The bot implements the registerUpload -> binary upload -> `ugcPosts` flow. The access token must be valid and authorized for the owner URN. Organization posting requires admin permissions for that organization.
+- See LinkedIn UGC docs: https://learn.microsoft.com/linkedin/marketing/integrations/community-management/shares
+
+#### Facebook (Page photo uploads)
+
+Required environment variables (for Page posting):
+- `FB_PAGE_ID` — the numeric Page id
+- `FB_PAGE_ACCESS_TOKEN` — Page access token (not just a user token)
+- Optional: `FB_GRAPH_VERSION` (default `v17.0`)
+
+Notes:
+- The bot uploads local images to the Page via the Graph API `/PAGE_ID/photos` endpoint. You must create a Facebook app and a Page access token with publishing permissions. See: https://developers.facebook.com/docs/pages/publishing/
+
+#### Instagram (Graph API)
+
+Recommended environment variables:
+- `INSTAGRAM_BUSINESS_ACCOUNT_ID` — ID of your connected Instagram Business/Creator account
+- `FB_PAGE_ACCESS_TOKEN` — the Page access token that has access to the Instagram business account
+- `MEDIA_HOSTING_URL` or an S3/Imgur configuration (see Media Hosting below)
+
+Notes:
+- Instagram Graph API requires images to be available via a publicly accessible URL (or use the container/publish flow which can accept remote media). The typical flow is:
+   1. Upload your local image to a public hosting location (S3/Imgur)
+   2. Create an Instagram media container pointing at that URL
+   3. Publish the container
+- Because the above requires external hosting (or an advanced Graph API flow), the repo includes a placeholder and guidance; we can add an automated hosting helper (S3/Imgur) if you want the bot to post directly from local files.
+   See: https://developers.facebook.com/docs/instagram-api/guides/content-publishing
+
+#### TikTok
+
+Integration notes:
+- TikTok's Content API requires registering as a developer and creating an app. The API typically needs OAuth authorization and app review for media publishing.
+- The repo includes a placeholder module describing the steps; if you want a fully automated flow, provide TikTok app credentials and I can scaffold OAuth and upload code.
+   See: https://developers.tiktok.com/
+
+#### Bluesky (AT Protocol)
+
+Integration notes:
+- Bluesky uses the AT Protocol (bsky). There are Python/JS clients emerging for interacting with Bluesky. Posting media involves uploading media to Bluesky's blob store then creating a feed post that references the blob.
+- The repo includes a placeholder with guidance. If you want a full adapter, I can add an atproto client integration once you provide an app token or credentials.
+   See: https://atproto.com/ and https://bsky.app/docs
+
+#### WhatsApp (Cloud API)
+
+Required environment variables:
+- `WHATSAPP_PHONE_NUMBER_ID` — the business phone-number-id configured in Meta
+- `WHATSAPP_ACCESS_TOKEN` — the WhatsApp Cloud API bearer token
+- `WHATSAPP_TO` — destination phone number in international format (e.g. `+15551234567`)
+
+Notes:
+- The bot uploads media to `/{phone_number_id}/media` and then sends an image message referencing the returned media id.
+- You must set up a WhatsApp Business account on Meta and use the Cloud API. See: https://developers.facebook.com/docs/whatsapp/cloud-api
+
+Alternative (Twilio WhatsApp):
+- If you use Twilio's WhatsApp integration, Twilio requires a publicly accessible media URL. Consider using the Media Hosting options below and then using Twilio's REST API with `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and the Twilio WhatsApp sender number (e.g. `whatsapp:+1415xxxxxxx`).
+
+#### Signal
+
+Required environment variables for the current helper:
+- `SIGNAL_RECIPIENT` — recipient phone number in international format
+- `SIGNAL_CLI_REST_URL` (optional) — URL of a running `signal-cli-rest-api` instance (default `http://localhost:8080`)
+
+Notes:
+- Signal has no official central HTTP API. The practical option is to run `signal-cli` (or the `signal-cli-rest-api` wrapper) locally, register a phone number, and expose a REST endpoint the bot can call. The repo includes a helper adapter that attempts common endpoints.
+   See: https://github.com/bbernhard/signal-cli-rest-api
+
+#### YouTube
+
+Integration notes:
+- YouTube is video-first: posting requires OAuth2 credentials and uploading a video. If you want to create short videos from images (e.g., static image + short audio track), we can add an optional ffmpeg-based video generator and a YouTube uploader that uses OAuth2 refresh tokens.
+- Required pieces for a full integration are `YOUTUBE_CLIENT_ID`, `YOUTUBE_CLIENT_SECRET` and an OAuth flow to obtain `YOUTUBE_REFRESH_TOKEN`.
+   See: https://developers.google.com/youtube/v3/guides/uploading_a_video
+
+#### Media Hosting (for platforms that require public URLs)
+
+When a platform requires a public media URL (Instagram, Twilio WhatsApp, some TikTok flows), you can choose one of the following:
+
+- S3 (recommended for production):
+   - `AWS_S3_BUCKET`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`
+   - Upload local images to S3 and use the public URL for API calls.
+
+- Imgur (quick, developer-friendly):
+   - `IMGUR_CLIENT_ID` — upload local images to Imgur anonymously and use the returned URL.
+   - Note: Imgur has rate limits and terms of service; use appropriately.
+
+We can add a small `media_hosting` helper that uploads files to S3 or Imgur automatically before posting to platforms that require public URLs.
+
+---
+
+If you want, I can implement the media-hosting helper (S3 or Imgur) next and then add a full Instagram and Twilio WhatsApp adapter so the bot can post directly from local images without manual hosting.
 
 ## Deployment on Akash Network
 
