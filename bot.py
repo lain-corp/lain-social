@@ -26,6 +26,8 @@ from social_platforms.tiktok import TikTokPoster
 from social_platforms.bluesky import BlueskyPoster
 from social_platforms.whatsapp import WhatsAppPoster
 from social_platforms.signal import SignalPoster
+from social_platforms.instagram import InstagramPoster
+from social_platforms.youtube import YouTubePoster
 from ai_comment_generator import CommentGenerator
 from image_manager import ImageManager
 
@@ -104,26 +106,35 @@ class LainSocialBot:
                 except Exception as e:
                     logger.error(f"Failed to initialize WhatsApp poster: {e}")
 
-            # Signal via signal-cli REST API
-            if os.getenv('SIGNAL_RECIPIENT'):
-                try:
-                    self.posters.append(SignalPoster())
-                    logger.info("Signal poster initialized")
-                except Exception as e:
-                    logger.error(f"Failed to initialize Signal poster: {e}")
+        # Signal via signal-cli REST API
+        if os.getenv('SIGNAL_RECIPIENT'):
+            try:
+                self.posters.append(SignalPoster())
+                logger.info("Signal poster initialized")
+            except Exception as e:
+                logger.error(f"Failed to initialize Signal poster: {e}")
+
+        # Instagram (Graph API with media hosting)
+        if os.getenv('INSTAGRAM_BUSINESS_ACCOUNT_ID') and os.getenv('FB_PAGE_ACCESS_TOKEN'):
+            try:
+                self.posters.append(InstagramPoster())
+                logger.info("Instagram poster initialized")
+            except Exception as e:
+                logger.error(f"Failed to initialize Instagram poster: {e}")
+
+        # YouTube (video generation + upload)
+        if os.getenv('YOUTUBE_CLIENT_ID') and os.getenv('YOUTUBE_REFRESH_TOKEN'):
+            try:
+                self.posters.append(YouTubePoster())
+                logger.info("YouTube poster initialized")
+            except Exception as e:
+                logger.error(f"Failed to initialize YouTube poster: {e}")
 
         # Optional placeholders for other platforms (enable with ENABLE_PLACEHOLDERS=true)
         if os.getenv('ENABLE_PLACEHOLDERS', 'false').lower() == 'true':
             other_platforms = [
-                ('Facebook', 'Use Meta Graph API / Instagram Graph API with appropriate app and permissions'),
-                ('Instagram', 'Use Instagram Graph API (business account) or direct upload via Facebook Graph API'),
                 ('Threads', 'Threads API is currently restricted; consider using Instagram Graph APIs if/when available'),
-                ('Bluesky', 'Bluesky currently has a developer API; implement an ActivityPub or Bluesky client'),
                 ('TikTok', 'TikTok API requires a developer account; consider using their Business API'),
-                ('LinkedIn', 'Use LinkedIn Marketing APIs or REST endpoints with OAuth2'),
-                ('YouTube', 'Use Google APIs (youtube.upload) with OAuth2 credentials'),
-                ('Signal', 'Consider signal-cli or third-party gateways'),
-                ('WhatsApp', 'Use WhatsApp Business API or Twilio WhatsApp integration')
             ]
 
             for name, note in other_platforms:

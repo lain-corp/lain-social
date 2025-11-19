@@ -93,50 +93,11 @@ All configuration is done via environment variables. See `.env.example` for a co
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `USE_AI_COMMENTS` | `false` | Enable AI-generated comments |
-| `AI_PROVIDER` | `openrouter` | AI provider: `openai`, `anthropic`, or `openrouter` |
-| `OPENROUTER_API_KEY` | - | OpenRouter API key (recommended for multimodal) |
-| `OPENROUTER_MODEL` | `anthropic/claude-3.5-sonnet` | OpenRouter model to use |
+| `AI_PROVIDER` | `openai` | AI provider: `openai` or `anthropic` |
 | `OPENAI_API_KEY` | - | OpenAI API key |
 | `OPENAI_MODEL` | `gpt-3.5-turbo` | OpenAI model to use |
 | `ANTHROPIC_API_KEY` | - | Anthropic API key |
 | `ANTHROPIC_MODEL` | `claude-3-haiku-20240307` | Anthropic model to use |
-
-**Note:** When using `AI_PROVIDER=openrouter`, the bot will send images to the AI model for multimodal analysis, generating contextual comments based on the actual image content. This provides more relevant and engaging comments compared to generic text-only generation.
-
-#### Using OpenRouter (Recommended)
-
-OpenRouter provides access to multiple AI models through a unified API, including vision-capable models like Claude 3.5 Sonnet, GPT-4 Vision, and others. This is the recommended approach for multimodal AI comments.
-
-**Benefits:**
-- **Image Analysis**: The AI can actually "see" the Lain images and generate contextually relevant comments
-- **Model Variety**: Access to multiple models (Anthropic, OpenAI, Google, etc.) through one API
-- **Cost Effective**: Competitive pricing across different models
-- **Easy Switching**: Change models without changing code
-
-**Setup:**
-1. Sign up at [OpenRouter.ai](https://openrouter.ai/)
-2. Get your API key from the [Keys page](https://openrouter.ai/keys)
-3. Set environment variables:
-   ```bash
-   USE_AI_COMMENTS=true
-   AI_PROVIDER=openrouter
-   OPENROUTER_API_KEY=your_key_here
-   OPENROUTER_MODEL=anthropic/claude-3.5-sonnet  # or other vision models
-   ```
-
-**Supported Models with Vision:**
-- `anthropic/claude-3.5-sonnet` (recommended)
-- `anthropic/claude-3-opus`
-- `anthropic/claude-3-sonnet`
-- `openai/gpt-4-vision-preview`
-- `google/gemini-pro-vision`
-
-**How it Works:**
-When OpenRouter is configured, each image is:
-1. Encoded to base64
-2. Sent to the AI model along with a prompt
-3. Analyzed by the vision model
-4. Returned with a contextual comment about the specific image content
 
 ### Social Media Platforms
 
